@@ -1,0 +1,96 @@
+DNS Resolver
+	- Receives user's request and resolves URL to IP address
+	
+Scaling
+	- Horizontal
+		○ Increasing number of servers to handle loads/multiple requests from users
+		○ One is down, other servers can work
+	- Vertical
+		○ Increasing storage/RAM to handle loads/multiple requests
+		○ Drawback - becomes SPOF
+
+CDN
+	- Used to avoid latency
+	- User request -> cdn -> server
+	- Serves static files such as images,video,audio,html,css,js etc
+	- Stores static files as cache for quick retrieval to user.
+	- If cache miss gets data from server.
+	- If cache hit serves quickly.
+	- Doesn't stores dynamic data such as api response, user's data etc
+	- Cache invalidation is used to verify cache stored in CDN is equivalent to static files in server
+	- Cache invalidation strategies:
+		○ Add TTL (time to live) - how long a cache can stay
+		○ Add versioning
+
+Database
+	- Replication
+		○ One primary DB for write operation.
+		○ Multiple DB replicas for read operation
+		○ For example, if someone wrote some data to DB, he will expect to see data immediately but he wlll see stale data.
+		○ Why? Because Data replication to other Dbs take time even a fraction of nano second can be considered.
+		○ Hence in that case, to see reflect changes immediately at that time primary DB read operation is served.
+		○ Also if Primary DB dies for some reason, one replica DB out of others is promoted as primary DB
+	- Sharding
+		○ Single DB can't handle all the write operations together.
+		○ Data is divided into other dbs.
+		○ Strategies
+			§ Range based
+				□ Based on Id or Primary key
+					® For example, DB1 : users(id -> 1 to 100), DB2 : users(id -> 101 200)
+			§ Hash based
+				□ For example, there are 5 shards and users are with id -> 50 and 51
+				□ 50%5=0 (shard 0)
+				□ 51%5=1 (shard 1)
+
+Caching
+	- Frequent accessed data is stored in cache to faster retrieval.
+	- Data is stored in RAM, because data accessed from RAM are faster retrieved.
+	- Cache eviction strategies
+		○ LRU
+			§ Evicts the items that hasn't been used for a long time
+		○ LFU
+			§ Evicts the items that is least frequently accessed.
+		○ TTL (time to live)
+	- Cache writing strategies
+		○ Write through
+			§ Every data is written into cache & DB.
+			§ It is cost expensive as you are storing every data into cache & DB
+		○ Write back
+			§ Data is first written into cache.
+			§ Later into DB asynchronously
+	- Scenarios
+		○ Cold start
+			§ Let's say you have set caching newly in your system
+			§ In that case your cache is empty.
+			§ All the request will go to DB and db will be heavily used.
+			§ To avoid this, we add some data initially called as pre-warm (the most popular data)
+		○ Cache stompade
+			§ Newly cache setup
+			§ No data in cache
+			§ All the request will go to DB
+			§ To avoid that, out of all the request only one request interacts with DB and rest request follows with Cache
+			§ We called this as mutex
+			
+Load Balancer
+	- Load balancers can also fail as SPOF.
+	- We don't have to manage, cloud proviers take care of it
+	- L4
+		○ Works at Transport layer
+		○ Fast & Light weight
+		○ Algorithms
+			§ Round Robin
+			§ Least Connection
+			§ IP hashing
+	- L7
+		○ Works at Application Layer
+		○ Route to server based on path, header, cookie etc
+		○ Also continuously checks for health check
+		○ Examples : Nginx, AWS LB
+
+Messaging Queues (Event Driven Architecture + Async communication)
+
+Storage service (S3 or BLOB)
+	- Pre-signed URLS 
+		○ helps in not exposing file path
+		○ Crptographic support
+		○ Upload/retrieve support

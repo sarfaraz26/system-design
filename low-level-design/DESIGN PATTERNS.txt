@@ -1,0 +1,19 @@
+Design Patterns
+	- Creational
+		○ Singleton
+		○ Builder
+		○ Factory
+	- Structural
+		○ Adapter
+		○ Façade
+		○ Proxy
+		○ Decorator
+		○ Composite
+	- Behavioral
+		○ Strategy
+		○ Observer
+		○ State
+		○ Command
+		○ Template method
+		○ Iterator
+		○ Chain of Responsibility
