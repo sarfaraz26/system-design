@@ -1,7 +1,9 @@
 DNS Resolver
+=======================================================
 	- Receives user's request and resolves URL to IP address
 	
 Scaling
+=======================================================
 	- Horizontal
 		○ Increasing number of servers to handle loads/multiple requests from users
 		○ One is down, other servers can work
@@ -10,6 +12,7 @@ Scaling
 		○ Drawback - becomes SPOF
 
 CDN
+=======================================================
 	- Used to avoid latency
 	- User request -> cdn -> server
 	- Serves static files such as images,video,audio,html,css,js etc
@@ -23,6 +26,7 @@ CDN
 		○ Add versioning
 
 Database
+=======================================================
 	- Replication
 		○ One primary DB for write operation.
 		○ Multiple DB replicas for read operation
@@ -43,6 +47,7 @@ Database
 				□ 51%5=1 (shard 1)
 
 Caching
+=======================================================
 	- Frequent accessed data is stored in cache to faster retrieval.
 	- Data is stored in RAM, because data accessed from RAM are faster retrieved.
 	- Cache eviction strategies
@@ -72,6 +77,7 @@ Caching
 			§ We called this as mutex
 			
 Load Balancer
+=======================================================
 	- Load balancers can also fail as SPOF.
 	- We don't have to manage, cloud proviers take care of it
 	- L4
@@ -88,9 +94,126 @@ Load Balancer
 		○ Examples : Nginx, AWS LB
 
 Messaging Queues (Event Driven Architecture + Async communication)
+=======================================================
+
 
 Storage service (S3 or BLOB)
+=======================================================
 	- Pre-signed URLS 
 		○ helps in not exposing file path
 		○ Crptographic support
 		○ Upload/retrieve support
+
+
+Consistent Hashing
+=======================================================
+
+
+
+
+SHORT POLLING vs WEBSOCKETS vs SERVER-SENT EVENTS (SSE)
+=======================================================
+1) SHORT POLLING
+----------------
+
+   Client                                   Server
+     |                                        |
+     |------------ Any update? ------------->|
+     |<------------- No ----------------------|
+     |                                        |
+     |------------ Any update? ------------->|
+     |<------------- No ----------------------|
+     |                                        |
+     |------------ Any update? ------------->|
+     |<------- Yes! { response } -------------|
+     |                                        |
+
+   - Client asks again every N seconds (setInterval + fetch)
+   - Every request is a new HTTP request
+   - Most requests return nothing -> huge waste
+   - Used: simple dashboards, job status checks
+
+
+2) WEBSOCKETS
+-------------
+
+   Client                                   Server
+     |                                        |
+     |---------- WS handshake (HTTP Upgrade) ->|
+     |<--------- 101 Switching Protocols ------|
+     |                                        |
+     |        == Connection opened ==         |
+     |                                        |
+     |<---------- Server push msg ------------|
+     |<---------- Server push msg ------------|
+     |----------- Client msg ---------------->|
+     |<---------- Server push msg ------------|
+     |                                        |
+
+   - One persistent connection, BI-directional
+   - Low overhead per message
+   - Used: chat, multiplayer games, live collaboration
+   - Node: ws, socket.io | AWS: API Gateway WebSocket API
+
+
+3) SERVER-SENT EVENTS (SSE)
+---------------------------
+
+   Client                                   Server
+     |                                        |
+     |--- HTTP GET (Accept: text/event-stream)->|
+     |<-- 200 OK, connection kept open --------|
+     |                                        |
+     |        == Stream opened ==             |
+     |                                        |
+     |<---------- Server push msg ------------|
+     |<---------- Server push msg ------------|
+     |----------- Client msg ------X          |  (not over this stream)
+     |<---------- Server push msg ------------|
+     |                                        |
+
+   - Plain HTTP, UNI-directional: server -> client only
+   - Browser auto-reconnects (EventSource)
+   - Client sends data via a separate normal HTTP request
+   - Used: notifications, feeds, stock tickers, LLM token streaming
+   - Node: res.write("data: ...\n\n")
+
+
+QUICK COMPARISON
+----------------
+
+   Pattern        Direction           Connection          Overhead
+   -------------  ------------------  ------------------  --------
+   Short polling  Client -> Server    New request each    High
+   WebSockets     Both ways           One persistent      Low
+   SSE            Server -> Client    One persistent      Low
+
+
+
+IDEMPOTENCY
+=======================================================
+WITHOUT
+- Suppose an example of payment from client to server for 100$
+- Payment succeeded but for sending "Successful done" message to server, server died.
+- In that case, client will do the payment again ($200 paid).
+
+WITH
+- During payment, client sends a UUID in the header.
+- That UUID is stored in the cache as well.
+- Considering the same scenario, if server failed to respond successfull message
+- Client will again try to do the payment, but this time will check cache first
+- There the UUID will be present and he will not be charged again
+- Instead he will get "Successful done" response
+
+
+
+CAP THEOREM
+================================================
+C - CONSISTENCY (Always give me the response only when you know the response is correct)
+A - AVAILABILITY (Be available, even if you give me stale data so that system looks alive)
+P - PARTIONING (System continues to work, even if network breaks between the nodes)
+
+AP - is possible
+CP - is possible
+AC - not possible
+
